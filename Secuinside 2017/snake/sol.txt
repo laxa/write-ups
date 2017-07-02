@@ -1,0 +1,7 @@
+patch format => offset, size, old bytes, new bytes
+00000000004010B0  0x1 00 01          # every tick is a hit on apple !
+0000000000401697  0x3 A08601 50c300  # make the game go less quickly overtime
+
+Then just play the game for 304 moves (you can still take apple)
+
+flag: SECU[hack_is_the_wine_of_life._Let's_drink_it.]
